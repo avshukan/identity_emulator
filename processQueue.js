@@ -64,7 +64,8 @@ function processQueue(queue) {
       return;
     }
     if (percent >= ERROR) {
-      element.Result = 'NotIdentified';
+      console.log('RANDOM ERROR GENERATED');
+      element.Result = 'Error';
       return;
     }
     const filter = DATA.filter((item) => item.FamilyName === element.FamilyName);
@@ -74,7 +75,8 @@ function processQueue(queue) {
       return;
     }
     element.Result = 'Identified';
-    element.Payload = filter[0];
+    const [payload] = filter;
+    element.Payload = payload;
   }
   // console.log('QUEUE', queue);
 }
