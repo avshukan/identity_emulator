@@ -1,19 +1,21 @@
 const QUEUE = [];
 
-var { v4 } = require('uuid'),
-    express = require('express'),
-    app = express(),
-    http = require('http'),
-    server = http.createServer(app),
-    xmlparser = require('express-xml-bodyparser'),
-    processQueue = require('./processQueue'),
-    sendIdentityResponseSuccess = require('./sendIdentityResponseSuccess'),
-    sendIdentityResponseError = require('./sendIdentityResponseError'),
-    getIdentityResponseIdentified = require('./getIdentityResponseIdentified'),
-    getIdentityResponseError = require('./getIdentityResponseError'),
-    getIdentityResponseNoData = require('./getIdentityResponseNoData'),
-    getIdentityResponseNoResponse = require('./getIdentityResponseNoResponse'),
-    getIdentityResponseNotIdentified = require('./getIdentityResponseNotIdentified')
+const { v4 } = require('uuid');
+const express = require('express');
+
+const app = express();
+const http = require('http');
+
+const server = http.createServer(app);
+const xmlparser = require('express-xml-bodyparser');
+const processQueue = require('./processQueue');
+const sendIdentityResponseSuccess = require('./sendIdentityResponseSuccess');
+const sendIdentityResponseError = require('./sendIdentityResponseError');
+const getIdentityResponseIdentified = require('./getIdentityResponseIdentified');
+const getIdentityResponseError = require('./getIdentityResponseError');
+const getIdentityResponseNoData = require('./getIdentityResponseNoData');
+const getIdentityResponseNoResponse = require('./getIdentityResponseNoResponse');
+const getIdentityResponseNotIdentified = require('./getIdentityResponseNotIdentified')
     ;
 
 // .. other middleware ...
@@ -22,7 +24,7 @@ app.use(express.urlencoded());
 app.use(xmlparser());
 // ... other middleware ...
 
-app.post('/', function(req, res, next) {
+app.post('/', (req, res, next) => {
   const envelopeBody = req.body['s:envelope']['s:body'][0];
   // console.log(envelopeBody);
   // console.log(envelopeBody[0]);
@@ -43,7 +45,7 @@ app.post('/', function(req, res, next) {
 
     const answer = sendIdentityResponseSuccess(requestMessageID);
 
-    QUEUE.push({RequestMessageID: requestMessageID, Result: 'NoResponse', FamilyName: familyname});
+    QUEUE.push({ RequestMessageID: requestMessageID, Result: 'NoResponse', FamilyName: familyname });
     processQueue(QUEUE);
     res.send(answer);
   } else if ('ns1:getidentityrequest' in envelopeBody) {
@@ -59,10 +61,10 @@ app.post('/', function(req, res, next) {
       return;
     }
 
-    let response = undefined;
+    let response;
     if (identityresultrequest['ns1:requestmessageid'] !== undefined) {
       const requestMessageID = identityresultrequest['ns1:requestmessageid'][0];
-      const index = QUEUE.findIndex(item => item.RequestMessageID === requestMessageID);
+      const index = QUEUE.findIndex((item) => item.RequestMessageID === requestMessageID);
       const founded = QUEUE.splice(index, 1);
       console.log('index founded', index, founded);
       response = founded.shift();
@@ -83,7 +85,7 @@ app.post('/', function(req, res, next) {
         res.send(getIdentityResponseNotIdentified(response.RequestMessageID));
         break;
       case 'Identified':
-        res.send(getIdentityResponseIdentified({RequestMessageID: response.RequestMessageID, ...response.Payload}));
+        res.send(getIdentityResponseIdentified({ RequestMessageID: response.RequestMessageID, ...response.Payload }));
         break;
       default:
         res.send('default');
