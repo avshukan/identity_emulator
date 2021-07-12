@@ -4,9 +4,9 @@ const { v4 } = require('uuid');
 const express = require('express');
 
 const app = express();
-const http = require('http');
+// const http = require('http');
 
-const server = http.createServer(app);
+// const server = http.createServer(app);
 const xmlparser = require('express-xml-bodyparser');
 const processQueue = require('./processQueue');
 const sendIdentityResponseSuccess = require('./sendIdentityResponseSuccess');
@@ -15,8 +15,7 @@ const getIdentityResponseIdentified = require('./getIdentityResponseIdentified')
 const getIdentityResponseError = require('./getIdentityResponseError');
 const getIdentityResponseNoData = require('./getIdentityResponseNoData');
 const getIdentityResponseNoResponse = require('./getIdentityResponseNoResponse');
-const getIdentityResponseNotIdentified = require('./getIdentityResponseNotIdentified')
-    ;
+const getIdentityResponseNotIdentified = require('./getIdentityResponseNotIdentified');
 
 // .. other middleware ...
 app.use(express.json());
@@ -24,7 +23,8 @@ app.use(express.urlencoded());
 app.use(xmlparser());
 // ... other middleware ...
 
-app.post('/', (req, res, next) => {
+// app.post('/', (req, res, next) => {
+app.post('/', (req, res) => {
   const envelopeBody = req.body['s:envelope']['s:body'][0];
   // console.log(envelopeBody);
   // console.log(envelopeBody[0]);
@@ -36,7 +36,7 @@ app.post('/', (req, res, next) => {
     // console.log('identityrequestrequest', identityrequestrequest);
     const familyname = identityrequestrequest[0]['ns1:familyname'][0];
     const medicalorgoid = identityrequestrequest[0]['ns1:medicalorgoid'];
-    // console.log('medicalorgoid', medicalorgoid);
+    console.log('medicalorgoid', medicalorgoid);
 
     if (medicalorgoid[0] !== '1.2.643.5.1.13.13.12.2.1.1378') {
       res.send(sendIdentityResponseError(requestMessageID));
@@ -54,7 +54,8 @@ app.post('/', (req, res, next) => {
     console.log('getidentityrequest', getidentityrequest);
     const identityresultrequest = getidentityrequest['ns1:identityresultrequest'][0];
     console.log('identityresultrequest', identityresultrequest);
-    const medicalorgoid = identityresultrequest['ns1:medicalorgoid'][0];
+    // const medicalorgoid = identityresultrequest['ns1:medicalorgoid'][0];
+    // console.log('medicalorgoid', medicalorgoid);
     // NO DATA
     if (identityresultrequest['ns1:requestmessageid'] === undefined && QUEUE.length === 0) {
       res.send(getIdentityResponseNoData());
@@ -97,4 +98,9 @@ app.post('/', (req, res, next) => {
   }
 });
 
-server.listen(3000);
+module.exports = app;
+
+process.on('SIGINT', () => process.exit());
+process.on('SIGTERM', () => process.exit());
+
+// server.listen(3000);
