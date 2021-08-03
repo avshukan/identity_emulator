@@ -25,7 +25,13 @@ app.use(xmlparser());
 
 // app.post('/', (req, res, next) => {
 app.post('/', (req, res) => {
-  const envelopeBody = req.body['s:envelope']['s:body'][0];
+  let envelopeBody;
+  try {
+    ({ envelopeBody } = req.body['s:envelope']['s:body']);
+  } catch {
+    res.send(sendIdentityResponseError(0));
+    return;
+  }
   // console.log(envelopeBody);
   // console.log(envelopeBody[0]);
   if ('ns1:sendidentityrequest' in envelopeBody) {
