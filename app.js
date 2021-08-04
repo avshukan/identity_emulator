@@ -25,15 +25,15 @@ app.use(xmlparser());
 
 // app.post('/', (req, res, next) => {
 app.post('/', (req, res) => {
+  res.set('content-type', 'text/xml');
   let envelopeBody;
   try {
-    ({ envelopeBody } = req.body['s:envelope']['s:body']);
-  } catch {
+    ([ envelopeBody ] = req.body['s:envelope']['s:body']);
+  } catch(e) {
+    console.log('error');
     res.send(sendIdentityResponseError(0));
     return;
   }
-  // console.log(envelopeBody);
-  // console.log(envelopeBody[0]);
   if ('ns1:sendidentityrequest' in envelopeBody) {
     const requestMessageID = v4();
     const sendidentityrequest = envelopeBody['ns1:sendidentityrequest'];
