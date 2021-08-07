@@ -1,6 +1,8 @@
 const QUEUE = [];
 
 const { v4 } = require('uuid');
+const fs = require('fs');
+// const OBJtoXML = require('./OBJtoXML');
 const express = require('express');
 
 const app = express();
@@ -25,11 +27,13 @@ app.use(xmlparser());
 
 // app.post('/', (req, res, next) => {
 app.post('/', (req, res) => {
+  // const xml = OBJtoXML(req.body);
+  fs.writeFileSync('body.json', JSON.stringify(req.body));
   res.set('content-type', 'text/xml');
   let envelopeBody;
   try {
-    ([ envelopeBody ] = req.body['s:envelope']['s:body']);
-  } catch(e) {
+    ([envelopeBody] = req.body['s:envelope']['s:body']);
+  } catch (e) {
     console.log('error');
     res.send(sendIdentityResponseError(0));
     return;
