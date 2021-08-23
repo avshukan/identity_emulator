@@ -1,6 +1,7 @@
 const QUEUE = [];
 
 const { v4 } = require('uuid');
+const fs = require('fs');
 const express = require('express');
 
 const app = express();
@@ -25,6 +26,8 @@ app.use(xmlparser());
 // ... other middleware ...
 
 app.post('/', (req, res) => {
+  fs.writeFileSync('body.json', JSON.stringify(req.body));
+  res.set('content-type', 'text/xml');
   const envelope = getPropertyByKeyFragment(req.body, 'envelope');
   const body = getPropertyByKeyFragment(envelope, 'body');
   const sendidentityrequest = getPropertyByKeyFragment(body, 'sendidentityrequest');
