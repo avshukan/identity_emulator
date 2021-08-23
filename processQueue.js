@@ -55,8 +55,6 @@ function processQueue(queue) {
   for (let i = 0; i < queue.length; i += 1) {
     const element = queue[i];
     const percent = Math.random() * MAX;
-    // console.log('percent', percent);
-    // console.log('element', JSON.stringify(element));
     if (element.Result !== 'NoResponse') {
       return;
     }
@@ -69,7 +67,6 @@ function processQueue(queue) {
       return;
     }
     const filter = DATA.filter((item) => item.FamilyName === element.FamilyName);
-    // console.log('filter', JSON.stringify(filter));
     if (filter.length === 0) {
       element.Result = 'NotIdentified';
       return;
@@ -78,7 +75,6 @@ function processQueue(queue) {
     const [payload] = filter;
     element.Payload = payload;
   }
-  // console.log('QUEUE', queue);
 }
 
 module.exports = processQueue;

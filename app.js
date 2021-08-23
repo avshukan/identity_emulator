@@ -9,6 +9,7 @@ const app = express();
 // const server = http.createServer(app);
 const xmlparser = require('express-xml-bodyparser');
 const processQueue = require('./processQueue');
+const getPropertyByKeyFragment = require('./getPropertyByKeyFragment');
 const sendIdentityResponseSuccess = require('./sendIdentityResponseSuccess');
 const sendIdentityResponseError = require('./sendIdentityResponseError');
 const getIdentityResponseIdentified = require('./getIdentityResponseIdentified');
@@ -23,48 +24,41 @@ app.use(express.urlencoded());
 app.use(xmlparser());
 // ... other middleware ...
 
-// app.post('/', (req, res, next) => {
 app.post('/', (req, res) => {
-  const envelopeBody = req.body['s:envelope']['s:body'][0];
-  // console.log(envelopeBody);
-  // console.log(envelopeBody[0]);
-  if ('ns1:sendidentityrequest' in envelopeBody) {
+  const envelope = getPropertyByKeyFragment(req.body, 'envelope');
+  const body = getPropertyByKeyFragment(envelope, 'body');
+  const sendidentityrequest = getPropertyByKeyFragment(body, 'sendidentityrequest');
+  console.log('sendidentityrequest', sendidentityrequest);
+  const getidentityrequest = getPropertyByKeyFragment(body, 'getidentityrequest');
+  console.log('getidentityrequest', getidentityrequest);
+  if (sendidentityrequest) {
     const requestMessageID = v4();
-    const sendidentityrequest = envelopeBody['ns1:sendidentityrequest'];
-    // console.log(sendidentityrequest);
-    const identityrequestrequest = sendidentityrequest[0]['ns1:identityrequestrequest'];
-    // console.log('identityrequestrequest', identityrequestrequest);
-    const familyname = identityrequestrequest[0]['ns1:familyname'][0];
-    const medicalorgoid = identityrequestrequest[0]['ns1:medicalorgoid'];
-    console.log('medicalorgoid', medicalorgoid);
+    const identityrequestrequest = getPropertyByKeyFragment(sendidentityrequest, 'identityrequestrequest');
+    console.log('identityrequestrequest', identityrequestrequest);
+    const familyname = getPropertyByKeyFragment(identityrequestrequest, 'familyname');
+    const medicalorgoid = getPropertyByKeyFragment(identityrequestrequest, 'medicalorgoid');
 
-    if (medicalorgoid[0] !== '1.2.643.5.1.13.13.12.2.1.1378') {
+    if (medicalorgoid !== '1.2.643.5.1.13.13.12.2.1.1378') {
       res.send(sendIdentityResponseError(requestMessageID));
       return;
     }
 
     const answer = sendIdentityResponseSuccess(requestMessageID);
-
     QUEUE.push({ RequestMessageID: requestMessageID, Result: 'NoResponse', FamilyName: familyname });
     processQueue(QUEUE);
     res.send(answer);
-  } else if ('ns1:getidentityrequest' in envelopeBody) {
-    // console.log(envelopeBody[0]);
-    const getidentityrequest = envelopeBody['ns1:getidentityrequest'][0];
-    console.log('getidentityrequest', getidentityrequest);
-    const identityresultrequest = getidentityrequest['ns1:identityresultrequest'][0];
+  } else if (getidentityrequest) {
+    const identityresultrequest = getPropertyByKeyFragment(getidentityrequest, 'identityresultrequest');
     console.log('identityresultrequest', identityresultrequest);
-    // const medicalorgoid = identityresultrequest['ns1:medicalorgoid'][0];
-    // console.log('medicalorgoid', medicalorgoid);
     // NO DATA
     if (identityresultrequest['ns1:requestmessageid'] === undefined && QUEUE.length === 0) {
       res.send(getIdentityResponseNoData());
       return;
     }
 
+    const requestMessageID = getPropertyByKeyFragment(identityresultrequest, 'requestmessageid');
     let response;
-    if (identityresultrequest['ns1:requestmessageid'] !== undefined) {
-      const requestMessageID = identityresultrequest['ns1:requestmessageid'][0];
+    if (requestMessageID) {
       const index = QUEUE.findIndex((item) => item.RequestMessageID === requestMessageID);
       const founded = QUEUE.splice(index, 1);
       console.log('index founded', index, founded);
@@ -74,7 +68,7 @@ app.post('/', (req, res) => {
     }
     console.log('response', response);
 
-    switch (response.Result) {
+    switch ((response && response.Result) || '') {
       case 'NoResponse':
         res.send(getIdentityResponseNoResponse());
         QUEUE.push(response);
